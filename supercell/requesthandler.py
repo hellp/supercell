@@ -116,6 +116,36 @@ class RequestHandler(rq):
         '''
         raise NotImplemented
 
+    def handle_execution_error(self, exception):
+        '''Handle execution phase exceptions in a customized way.
+
+        Overwrite this method in subclasses to react to certain
+        exceptions, if the default error handling doesn't fit your
+        needs.
+
+        For example, to output model validation errors in a custom
+        JSON representation::
+
+            def handle_execution_error(self, exception):
+                from schematics.exceptions import BaseError
+                if isinstance(exception, BaseError):
+                    self.set_header('Content-Type', 'application/json')
+                    self.set_status(400)
+                    self.write(json.dumps({
+                        'error': True,
+                        'message': exception.messages,
+                    }))
+                    self.finish()
+                    return
+                raise NotImplementedError
+
+        Note that, if you decide you cannot handle the passed-in
+        exception, you may ``raise NotImplementedError`` at any time and
+        the default error handling will take over.
+
+        '''
+        raise NotImplementedError
+
     def _execute_method(self):
         '''Execute the request.
 

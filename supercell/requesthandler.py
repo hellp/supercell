@@ -164,11 +164,15 @@ class RequestHandler(rq):
                         headers['Content-Type'], self)
                     consumer = consumer_class()
                     kwargs['model'] = consumer.consume(self, model)
-                except NoConsumerFound:
-                    # TODO return available consumer types?!
-                    raise HTTPError(406)
-                except StandardError as e:
-                    raise HTTPError(400, reason=unicode(e))
+                except (NoConsumerFound, StandardError) as e:
+                    try:
+                        return self.handle_execution_error(e)
+                    except NotImplementedError:
+                        if isinstance(e, NoConsumerFound):
+                            # TODO return available consumer types?!
+                            raise HTTPError(406)
+                        elif isinstance(e, StandardError):
+                            raise HTTPError(400, reason=unicode(e))
 
             if verb in ['get', 'head']:
                 # check if there is caching information stored with the handler
